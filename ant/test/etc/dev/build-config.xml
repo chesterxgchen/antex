@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+    
+<!--
+
+    configuration.xml is used to control runtime and build configuraiton.
+
+    Purpose of this file:
+
+    This configuration file is used to control the configurations ant build configuration.
+    The configurations used by ant scripts can be system properties, property files or XML files.
+
+    This configuration is used to control and coordinate the configurations from different sources,
+    and govern the rules regarding priority and overwrite and team work.
+
+    By using this control configuration, we can individually switch between different database (ORACLE OR MYSQL)
+    different test hosts, targets, ports etc. without changing the overal build scripts or mandating everyone
+    has the same code structure. In a larget team, there are inevitable that many developers using different OS (linux,
+    windows and Mac) and location of the installations (database, application servers) may be different.
+
+    using the individual configuration properties/xml, we can usinig the same build scripts without causing conflicts.
+
+
+    How this is done:
+    This configuration loads all properties in the individual config files into memory.
+    The configuration file is loaded in the first come, first loaded sequence.
+    The later loaded the configuration will overwrite the previous configurations.
+    Therefore the ealier ones can be served as default. (Opposite from Appache Commons Configuration)
+
+    Also, any prior loaded properties (include system properties) will be used in variable substitition for the subsequence properties.
+
+    The configuration currently is only FLAT properties. Hiearchical and multivalue properties will be added as needed.
+    The configuration loaded reconganize
+
+    The following element names:
+
+    <system/> - for explicit asking for loading system properties.</li>
+    <properties filename ="" /> - for specifiy a property file location, expecting a required "filename" attribute and an optional attribiute "optional"
+    <xml filename ="" /> - for specifiy a property file location, expecting a required "filename" attribute and an optional attribiute "optional"
+    <property name=""></property> - for specifiy an individual property expect a name attribute
+
+-->
+<configuration>
+
+    <!-- default loaded first-->
+    <system/>
+
+    <property name="project.home">/home/cchen/project/microloan</property>
+    <property name="project.lib.dir">${project.home}/lib</property>
+    <property name="project.config.dir">${project.module.dir}/config</property>
+    
+    <properties filename="${project.config.dir}/config.properties"/>
+    <properties filename="${project.config.dir}/appservers/${appserver}/appserver.properties" optional="true"/>
+    <properties filename="${project.config.dir}/databases/${db.vendor}/db.properties"/>
+
+	<properties filename="${project.config.dir}/developers/config.properties" optional="true"/>
+    <properties filename="${project.config.dir}/developers/${user.name}/config.properties" optional="true"/>
+    <properties filename="${project.config.dir}/developers/${user.name}/${host}/config.properties" optional="true"/>
+    <!-- loaded last -->
+
+</configuration>

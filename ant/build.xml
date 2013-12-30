@@ -1,0 +1,72 @@
+<project name="ant-ext" default="build" basedir=".">
+
+   <!-- ==============================================================
+     Ant build file: requires env. variable ANT_HOME defined
+
+     Xiaoguang (Chester) Chen
+    ============================================================== -->
+     <!-- defines project.home -->
+
+    <property environment="env"/>
+    <property name="project.home" location="../."/>
+    <import file="${project.home}/shared-include.xml"/>
+
+    <property name="ant.dir"          value="${project.home}/ant"/>
+    <property name="config.dir"       location="${project.home}/ant/config"/>
+    
+    <property name="log4j.property.uri" value="file://${config.dir}/log4j.properties"/>
+
+
+    <!-- Import shared initialization file -->
+     <property name="dist.jar" value="${ant.project.name}.jar"/>
+
+       <!-- shared.commons.libraries -->
+        <fileset id="shared.libraries" dir="${lib.dir}">
+         </fileset>
+
+       <!-- project.classpath -->
+       <path id="project.classpath">
+          <fileset refid="shared.libraries"/>
+          <pathelement location="${classes.dir}"/>
+       </path>
+
+       <!-- compile.classpath -->
+       <path id="compile.classpath">
+          <path refid="project.classpath"/>
+          <pathelement location="${classes.dir}"/>
+          <pathelement location="${src.dir}"/>
+       </path>
+
+
+    <!-- init -->
+    <target name="init" description="initialization"/>
+
+  <!-- rebuild -->
+  <target name="rebuild" depends="clean,build" description="rebuild ant task jar">
+
+  </target>
+  <target name="clean"  description="clean">
+      <delete dir="${classes.dir}"/>
+      <delete file="${dist.dir}/${dist.jar}" quiet="true"/>
+  </target>
+
+  <!-- build-->
+  <target name="build" description="build ant task jar">
+
+    <mkdir dir="${classes.dir}"/>
+    <mkdir dir="${dist.dir}"/>
+
+    <javac destdir="${classes.dir}" debug="${debug}" source="1.6"  classpathref="compile.classpath">
+        <src path="${src.dir}" />
+        <exclude name = "**/XmlConfigParser.java"/>
+    </javac>
+
+	<jar destfile="${dist.dir}/${dist.jar}">
+    	<fileset dir="${classes.dir}" />
+    </jar>
+
+     <copy file="${dist.dir}/${dist.jar}" todir="${lib.dir}" />
+
+  </target>
+
+</project>

@@ -1,0 +1,47 @@
+<project name="shared-include" default="help" basedir=".">
+
+   <!-- ==============================================================
+     shared build file
+
+     Xiaoguang (Chester) Chen
+    ============================================================== -->
+
+    <import file="shared-init.xml"/>
+
+    <echo>lib.dir= ${lib.dir}</echo>
+    <taskdef name="sqlex"  classname="com.xiaoguangchen.antex.taskdefs.SQLEx"
+                           classpath="${lib.dir}/ant-ext.jar"/>
+    <taskdef name="eq" classname="com.xiaoguangchen.antex.taskdefs.Equals"
+                           classpath="${lib.dir}/ant-ext.jar"/>
+    <taskdef name="not.eq" classname="com.xiaoguangchen.antex.taskdefs.NotEquals"
+                           classpath="${lib.dir}/ant-ext.jar"/>
+    <taskdef name="is.set" classname="com.xiaoguangchen.antex.taskdefs.IsSet"
+                           classpath="${lib.dir}/ant-ext.jar"/>
+    <taskdef name="is.not.set" classname="com.xiaoguangchen.antex.taskdefs.IsNotSet"
+                           classpath="${lib.dir}/ant-ext.jar"/>
+    <taskdef name="config" classname="com.xiaoguangchen.antex.taskdefs.Config"
+                           classpath="${lib.dir}/ant-ext.jar"/>
+
+	<taskdef name="assert.eq" classname="com.xiaoguangchen.antex.taskdefs.AssertEquals"
+                           classpath="${lib.dir}/ant-ext.jar"/>
+	<taskdef name="assert.not.eq" classname="com.xiaoguangchen.antex.taskdefs.AssertNotEquals"
+                           classpath="${lib.dir}/ant-ext.jar"/>
+	<taskdef name="buildnumber" classname="com.xiaoguangchen.antex.taskdefs.BuildNumber"
+                           classpath="${lib.dir}/ant-ext.jar"/>
+    <taskdef name="javac6"  classname="com.xiaoguangchen.antex.taskdefs.Javac6"
+                           classpath="${lib.dir}/ant-ext.jar"/>
+
+   
+
+    <!-- list all targets with non-empty description-->
+    <target name="help">
+        <java classname="org.apache.tools.ant.Main">
+            <arg value="-projecthelp"/>
+            <arg value="-buildfile"/>
+            <arg value="${ant.file}" />
+        </java>
+
+    </target>
+
+
+</project>

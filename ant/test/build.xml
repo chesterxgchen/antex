@@ -1,0 +1,464 @@
+<project name="ant-test" default="run-test" basedir=".">
+   <!-- ========================================================================
+    ANT TEST
+    Current directory is at:
+     <projcet_home> (module)
+        |- ant
+            |- test
+    Xiaoguang (Chester) Chen (chesterxgchen@yahoo.com)
+    $Id: $
+    ===========================================================================-->
+    <property environment="env"/>
+    <property name="project.home" value="../../"/>
+    <echo>
+        Project Home = ${project.home}
+    </echo>
+
+    <import file="${project.home}/shared-include.xml"/>
+
+   <!-- project.classpath -->
+   <path id="project.classpath">
+     <fileset dir="${lib.dir}">
+        <include name="oracle/ojdbc14.jar"/>
+      </fileset>
+   </path>
+
+   <target name="init" description="initialize"/>
+    <!-- ===============================================================
+      ALL TESTS
+     ================================================================== -->
+
+    <!-- run-test -->
+     <target name="run-test" depends="db-init" description="driving all test cases" >
+
+       <echo message ="jdbc driver = ${jdbc.driver}" />
+       <echo message ="jdbc.classpath= ${jdbc.classpath}" />
+       <echo message ="jdbc.url = ${jdbc.url}" />
+       <echo message ="user name = ${db.username}" />
+       <echo message ="db host= ${db.hostname}" />
+       <echo message ="database password = ${db.password}" />
+
+
+       <antcall target="test-is-set"/>
+       <antcall target="test-equals"/>
+       <antcall target="test-buildnumber"/>
+
+       <antcall target="test-config-1"/>
+       <antcall target="test-config-2"/>
+
+<!--
+        <antcall target="test-sql-comment"/>
+                <antcall target="test-delimiter"/>
+-->
+
+        <antcall target="test-mix-delimiter"/>
+        <antcall target="test-add-new-line-comment-symbol"/>
+        <antcall target="test-use-tokenmap"/>
+        <antcall target="test-use-block-comment"/>
+
+
+     </target>
+
+
+  <!-- ===============================================================
+    BASIC ANT TASK TESTS
+
+    todo: separate ORACLE and MYSQL test codes.
+   ================================================================== -->
+
+  <target name="test-is-set" description="test is.not.set and is.set">
+      <property name="setproperty" value="set value"/>
+
+      <is.not.set property="setproperty">
+          <echo>FAILED: property "setproperty" has value : ${setproperty}</echo>
+      </is.not.set>
+      <is.set property="setproperty">
+          <echo>PASSED: property "setproperty" has value : ${setproperty}</echo>
+      </is.set>
+      <is.not.set property="setproperty-randaom">
+          <echo>PASSED: property "setproperty-random" has value : ${setproperty}</echo>
+      </is.not.set>
+      <is.set property="setproperty-random">
+          <echo>FAILED: property "setproperty-random" has value : ${setproperty}</echo>
+      </is.set>
+
+  </target>
+
+    <target name="test-equals" description="test equals and not.equals">
+        <property name="arg1" value="value1"/>
+
+        <eq arg1="${arg1}" arg2="value1">
+            <echo>PASSED</echo>
+        </eq>
+        <not.eq arg1="${arg1}" arg2="value1">
+            <echo>FAILED</echo>
+        </not.eq>
+
+        <not.eq arg1="${arg1}" arg2="value2">
+            <echo>PASSED</echo>
+        </not.eq>
+
+        <eq arg1="${arg1}" arg2="value2">
+            <echo>FAILED</echo>
+        </eq>
+
+    </target>
+
+  <target name="test-buildnumber" description="test BuildNubmerEx">
+
+      <echo file="build.number1">
+          build.number=development-build-number-1.0.2.3-test
+      </echo>
+      <echo file="build.number2">
+          build.number=123.alpha
+      </echo>
+      <echo file="build.number3">
+          build.number=123.alpha.1
+      </echo>
+
+      <buildnumber file="build.number1" name="version.number1"/>
+      <buildnumber file="build.number2" name="version.number2"/>
+      <buildnumber file="build.number3" name="version.number3"/>
+
+      <assert.eq arg1="${version.number1}" arg2="development-build-number-1.0.2.3-test.0"/>
+      <assert.eq arg1="${version.number2}" arg2="123.alpha.0"/>
+      <assert.eq arg1="${version.number3}" arg2="123.alpha.2"/>
+
+
+  </target>
+
+
+   <!-- ===============================================================
+      Config Test: property configuration test
+    ================================================================== -->
+    <target name="test-config-1" depends="init" description="test multiple properties file">
+        <!-- prepare data -->
+        <mkdir   dir="etc/staging/developer" />
+        <!-- this is file loaded first -->
+        <echo file="etc/config.properties">
+            path=etc
+            name=config.properties
+        </echo>
+        <!-- this is file loaded second -->
+        <echo file="etc/db.properties">
+            name1=db.properties
+            port1=8081
+        </echo>
+        <!-- this is file loaded 3rd -->
+        <echo file="etc/test.properties">
+            name2=test.properties
+            port2=8080
+            path=etc.for.test
+        </echo>
+
+        <config  root ="etc" path ="staging/developer"
+                 filename="config.properties, db.properties, test.properties"
+                 separator="/" />
+        <assert.eq arg1="${path}" arg2="etc"/>
+        <assert.eq arg1="${name}" arg2="config.properties"/>
+        <assert.eq arg1="${name1}" arg2="db.properties"/>
+        <assert.eq arg1="${name2}" arg2="test.properties"/>
+        <assert.eq arg1="${port1}" arg2="8081"/>
+        <assert.eq arg1="${port2}" arg2="8080"/>
+
+    </target>
+
+     <target name ="test-config-2" depends="init" description="test path specific properties">
+
+         <delete  dir="etc/staging/developer"/>
+
+         <!-- prepare data -->
+         <mkdir   dir="etc/staging/developer" />
+         <!-- this is file loaded first -->
+         <echo file="etc/config.properties">
+         path=etc
+         name=config.properties
+         </echo>
+         <!-- this is file loaded second -->
+         <echo file="etc/staging/db.properties">
+         name1=db.properties
+         port1=8081
+         </echo>
+         <!-- this is file loaded 3rd -->
+         <echo file="etc/staging/developer/test.properties">
+         name2=test.properties
+         port2=8080
+         path=etc.for.test
+         </echo>
+
+         <property name="testme" location = "etc"/>
+         <echo>
+             ${testme}
+         </echo>
+         <config  root ="etc" path ="staging/developer"  separator ="/">
+             <fileset dir="etc" includes="config.properties"/>
+             <fileset dir="etc/staging" includes="db.properties"/>
+             <fileset dir="etc/staging/developer" includes="test.properties"/>
+         </config>
+
+         <assert.eq arg1="${path}" arg2="etc.for.test"/>
+         <assert.eq arg1="${name}" arg2="config.properties"/>
+         <assert.eq arg1="${name1}" arg2="db.properties"/>
+         <assert.eq arg1="${name2}" arg2="test.properties"/>
+         <assert.eq arg1="${port1}" arg2="8081"/>
+         <assert.eq arg1="${port2}" arg2="8080"/>
+
+     </target>
+
+
+    <target name ="test-config-3" depends="init" description="test path specific properties">
+
+        <delete  dir="etc"/>
+        <!-- prepare data -->
+        <mkdir   dir="etc/database/oracle" />
+        <mkdir   dir="etc/database/db2" />
+        <!-- this is file loaded first -->
+        <echo file="etc/database/test.properties">db.vendor=oracle
+         db.file=db.properties
+        </echo>
+        <!-- this is file loaded second -->
+        <echo file="etc/database/oracle/db.properties">db.oracle.port=1522
+            db.username=chester
+            db.password=chester
+            db.hostname=mengzi
+            db.port=1521
+            db.sid=orac
+            jdbc.driver=oracle.jdbc.driver.OracleDriver
+            jdbc.url=jdbc:oracle:thin:@${db.hostname}:${db.port}:${db.sid}
+        </echo>
+
+        <config  root ="etc" path ="database/${db.vendor}"
+                 filename="test.properties,${db.file}" separator="/"/>
+
+        <assert.eq arg1="${db.vendor}" arg2="oracle"/>
+        <assert.eq arg1="${db.port}" arg2="1521"/>
+        <assert.eq arg1="${db.username}" arg2="chester"/>
+        <assert.eq arg1="${jdbc.url}" arg2="jdbc:oracle:thin:@${db.hostname}:${db.port}:${db.sid}"/>
+    </target>
+
+
+    <!-- ===============================================================
+      SQLEX TEST
+     ================================================================== -->
+
+  <target name="db-init" depends="init" description="initialize database connection properties">
+ 
+     <!-- loading configuration -->
+
+    <property name="test.dir" location="${project.home}/ant/test"/>
+
+     <config root="${basedir}/etc/dev" path="databases/${db.vendor}"
+             filename="config.properties, db.properties" separator="/" />
+
+
+     <is.not.set property="db.vendor">
+	   <echo message="WARNING: no db.vendor specified; setting to ${oracle}" />
+	   <property name="db.vendor" value="${oracle}"/>
+       <config root="${project.home}/config" path="databases/${db.vendor}"
+               filenames="config.properties, db.properties" separator="/" />
+     </is.not.set>
+
+    <echo message = "db.vendor = ${db.vendor}">
+            jdbc.driver=${jdbc.driver}
+            jdbc.url= ${jdbc.url}
+            jdbc.classpath= ${jdbc.classpath}
+            db.redirect.token=${db.redirect.token}
+            sql.delimiter=${sql.delimiter}
+    </echo>
+
+
+	<eq arg1="${db.vendor}" arg2="${oracle}">
+        <echo>setting oracle properties</echo>
+        <property name="sql.dir"	value="${basedir}/sql/oracle"/>
+	</eq>
+
+	<eq arg1="${db.vendor}" arg2="${db2}">
+	    <echo message = "setting db2 properties"/>
+   	    <property name="sql.dir"  value="{basedir}/sql/db2"/>
+	</eq>
+
+	<eq arg1="${db.vendor}" arg2="${sqlserver}">
+	    <echo message = "setting MS SQLSERVER properties"/>
+   	    <property name="sql.dir"	           value="${basedir}/sql/sqlserver"/>
+	</eq>
+
+    <eq arg1="${db.vendor}" arg2="${mysql}">
+       <echo message = "setting mysql properties"/>
+       <property name="sql.dir" value="${basedir}/sql/mysql"/>
+    </eq>
+
+
+  </target>
+
+<!--
+  <target name ="test-sql-comment" description="run sql command">
+      <echo>
+            driver="${jdbc.driver}" classpath="${jdbc.classpath}"          
+      </echo>
+
+     MY SQL Driver does not allow select in ExecuteUpdate() call.
+     
+    <sqlex driver="${jdbc.driver}" classpath="${jdbc.classpath}"
+           url="${jdbc.url}" userid="${db.username}" password="${db.password}"
+           print="true"
+           allowNonDelimiterSQL ="true" >
+            select 2 as A , 1 as B;
+     </sqlex>
+ </target>
+
+  <target name ="test-delimiter" description="use database specific delimiter">
+    <sqlex driver="${jdbc.driver}" classpath="${jdbc.classpath}"
+           url="${jdbc.url}" userid="${db.username}" password="${db.password}"   delimiter="run">
+             select 2 as A , 1 as B from dual RUN
+     </sqlex>
+ </target>
+-->
+
+  <target name ="test-mix-delimiter" description="use different delimiters in one scripts: ; amd run ">
+    <sqlex driver="${jdbc.driver}" classpath="${jdbc.classpath}"
+           url="${jdbc.url}" userid="${db.username}" password="${db.password}" delimiter="//">
+           <transaction  transactionDelimiter=";" >
+               <!--select 2 as A , 1 as B from dual;-->
+
+               DROP TABLE IF EXISTS TESTME;
+               CREATE TABLE TESTME(X INT);
+
+               delimiter // ;
+               
+               CREATE OR REPLACE PROCEDURE p (IN tableName	VARCHAR )
+                BEGIN
+                     update TESTME set x = 1 where 1=0;
+                END;
+                //
+           </transaction>
+     </sqlex>
+ </target>
+
+
+
+  <target name ="test-add-new-line-comment-symbol" description="add used-defined line comment symbol">
+    <sqlex driver="${jdbc.driver}" classpath="${jdbc.classpath}"
+           url="${jdbc.url}" userid="${db.username}" password="${db.password}" delimiter="run" print="true">
+
+           <lineCommentSymbol symbol="."/>
+           <transaction  transactionDelimiter=";" >
+
+
+               DROP TABLE IF EXISTS TESTME;
+               CREATE TABLE TESTME(X INT);
+
+               CREATE OR REPLACE PROCEDURE p ( tableName		IN		VARCHAR )
+               IS
+                 BEGIN
+                     update TESTME set x = 1 where 1=0;
+                 END;
+                 .
+                 run
+           </transaction>
+     </sqlex>
+ </target>
+
+  <target name ="test-use-tokenmap" description="add map a token in a script to different string">
+    <sqlex driver="${jdbc.driver}" classpath="${jdbc.classpath}"
+           url="${jdbc.url}" userid="${db.username}" password="${db.password}" delimiter="run" print="true">
+
+           <tokenMapping from="." to = "//"/>
+           <transaction  transactionDelimiter=";" >
+
+               DROP TABLE IF EXISTS TESTME;
+               CREATE TABLE TESTME(X INT);
+
+
+               CREATE OR REPLACE PROCEDURE p ( tableName		IN		VARCHAR )
+               IS
+                 BEGIN
+                     update TESTME set x = 1 where 1=0;
+                 END;
+                 .
+                 run
+                 show errors
+           </transaction>
+     </sqlex>
+ </target>
+
+  <target name ="test-use-block-comment" depends="db-init" description=" user /* and */ as block (multiple line) comment">
+    <sqlex driver="${jdbc.driver}" classpath="${jdbc.classpath}"
+           url="${jdbc.url}" userid="${db.username}" password="${db.password}" print="true">
+
+           <transaction  transactionDelimiter=";" >
+               DROP TABLE IF EXISTS TESTME;
+               CREATE TABLE TESTME(X INT);
+                  
+/*
+
+               CREATE OR REPLACE PROCEDURE p ( tableName		IN		VARCHAR )
+               IS
+                 BEGIN
+                     update TESTME set x = 1 where 1=0;
+                 END;
+                 .
+                 run
+                 show errors
+*/
+           </transaction>
+     </sqlex>
+ </target>
+
+  <target name ="test-file-src" depends="db-init" description="use file instead of text area">
+     <sqlex driver="${jdbc.driver}" classpath="${jdbc.classpath}"
+           url="${jdbc.url}" userid="${db.username}" password="${db.password}" print="true"
+           src="${basedir}/sql/test.sql">
+     </sqlex>
+ </target>
+
+
+
+  <target name ="test-tran-file-src" depends="db-init" description="use file instead of text area">
+     <sqlex driver="${jdbc.driver}" classpath="${jdbc.classpath}"
+           url="${jdbc.url}" userid="${db.username}" password="${db.password}" print="true">
+           <transaction  src="${basedir}/sql/test.sql" />
+     </sqlex>
+ </target>
+
+<target name ="test-file-redirect" depends="db-init" description="use file direct symbol @">
+    <eq arg1="${db.vendor}" arg2="${oracle}">
+     <sqlex driver="${jdbc.driver}" classpath="${jdbc.classpath}"
+           url="${jdbc.url}" userid="${db.username}" password="${db.password}" print="true">
+           <transaction  src="${basedir}/sql/oracle/redirect.sql" />
+     </sqlex>
+
+    </eq>
+ </target>
+
+
+
+<target name ="test-call-sp" depends="db-init" description=" calling stored procedures ">
+    <eq arg1="${db.vendor}" arg2="${oracle}">
+     <sqlex driver="${jdbc.driver}" classpath="${jdbc.classpath}"
+           url="${jdbc.url}" userid="${db.username}" password="${db.password}" print="true"  delimiter="run" >
+
+           <transaction  transactionDelimiter=";" >
+               DROP TABLE IF EXISTS TESTME;
+               CREATE TABLE TESTME(X INT);
+
+               DELIMINATOR run;
+
+               CREATE OR REPLACE PROCEDURE p ( tableName		IN		VARCHAR )
+               IS
+                 BEGIN
+                     update TESTME set x = 1 where 1=0;
+                 END;
+                 .
+                 run
+                 show errors;
+               
+             exec p( 'TESTME' );
+           </transaction>
+     </sqlex>
+
+    </eq>
+ </target>
+
+
+</project>
+
